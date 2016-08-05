@@ -7,8 +7,14 @@ Java 8 (JDK) Instalado
 Veja as instruções:
 https://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html
 
+# Instalação:
+
+Basta fazer download do arquivo ec-mapper-0.1.0.jar para a pasta onde deseja instalar o projeto em sua máquina
+
 # Exemplos de execução via linha de comando:
 
+Dica: Execute esse comando na pasta onde está o arquivo ec-mapper-0.1.0.jar para simplificar a linha de comando
+ 
 :: Para comparar os resultados do Kass
 
 java -jar ec-mapper-0.1.0.jar -f c:\ec-mapper\files\files\Brugia_Kaas -c c:\ec-mapper\files\Necator_Kaas -p KASS
