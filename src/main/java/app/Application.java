@@ -252,8 +252,11 @@ public class Application implements CommandLineRunner {
 
                 writer = new BufferedWriter (new FileWriter(fileName, false));
 
-                writer.append("ec-mapper results:\n\n");
-                writer.append("EC numbers found in both files:");
+                writer.append("::::::::::::::::::::::::::::\n");
+                writer.append(":::: EC-MAPPER RESULTS  ::::\n");
+                writer.append("::::::::::::::::::::::::::::\n\n");
+                writer.append("1) EC numbers found in both files");
+                writer.append("\n\nTotal mapped EC: " + resultContaisInBoth.size());
                 writer.newLine();
                 writer.newLine();
                 for(String str: resultContaisInBoth) {
@@ -262,7 +265,8 @@ public class Application implements CommandLineRunner {
                 }
 
                 if (resultOnlyInF.size() > 0) {
-                    writer.append("\n\nEC numbers found only in the file " + fileF);
+                    writer.append("\n\n2) EC numbers found only in the file " + fileF);
+                    writer.append("\n\nTotal mapped EC: " + resultOnlyInF.size());
                     writer.newLine();
                     writer.newLine();
                     for (String str : resultOnlyInF) {
@@ -272,7 +276,8 @@ public class Application implements CommandLineRunner {
                 }
 
                 if (resultOnlyInC.size() > 0) {
-                    writer.append("\n\nEC numbers found only in the file " + fileC);
+                    writer.append("\n\n3)EC numbers found only in the file " + fileC);
+                    writer.append("\n\nTotal mapped EC: " + resultOnlyInC.size());
                     writer.newLine();
                     writer.newLine();
                     for (String str : resultOnlyInC) {
