@@ -1,4 +1,4 @@
-# ec-mapper
+# ec-mapper 0.2.0
 A process to compare data from Kass and AnEnPi annotations platform
 
 # Requisitos:
