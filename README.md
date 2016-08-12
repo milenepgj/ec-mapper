@@ -30,4 +30,4 @@ java -jar ec-mapper-[version].jar -f C:\files\Brugia_Kaas -c C:\files\listofECbm
 Nota: argumento -f nesse caso é o arquivo Kass e o -c é o arquivo AnEnPi
 
 # Exemplo de um dos arquivos de resultado
-ec-mapper_AEPI-Result.txt
+ec-mapper_KASS-Result.txt
