@@ -36,6 +36,7 @@ import org.springframework.context.annotation.PropertySource;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @SpringBootApplication
@@ -259,6 +260,7 @@ public class Application implements CommandLineRunner {
                 writer.append("\n\nTotal mapped EC: " + resultContaisInBoth.size());
                 writer.newLine();
                 writer.newLine();
+                Collections.sort(resultContaisInBoth);
                 for(String str: resultContaisInBoth) {
                     writer.append(str);
                     writer.newLine();
@@ -269,6 +271,7 @@ public class Application implements CommandLineRunner {
                     writer.append("\n\nTotal mapped EC: " + resultOnlyInF.size());
                     writer.newLine();
                     writer.newLine();
+                    Collections.sort(resultOnlyInF);
                     for (String str : resultOnlyInF) {
                         writer.append(str);
                         writer.newLine();
@@ -280,6 +283,7 @@ public class Application implements CommandLineRunner {
                     writer.append("\n\nTotal mapped EC: " + resultOnlyInC.size());
                     writer.newLine();
                     writer.newLine();
+                    Collections.sort(resultOnlyInC);
                     for (String str : resultOnlyInC) {
                         writer.append(str);
                         writer.newLine();
