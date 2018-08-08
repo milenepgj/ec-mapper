@@ -53,8 +53,9 @@ public class Application implements CommandLineRunner {
     private String outputPath = null;
     private List<String> listF = null;
     private List<String> listC = null;
-    private String fileName;
+    private String fileName = "";
     private boolean help = false;
+    private boolean isOnlyECBoth = false;
 
     public static void main(String args[]) {
         SpringApplication.run(Application.class, args);
@@ -81,6 +82,12 @@ public class Application implements CommandLineRunner {
                     case "-o":
                         outputPath = args[l + 1];
                         break;
+                    case "-fn":
+                        fileName = args[l + 1];
+                        break;
+                    case "-oe":
+                        isOnlyECBoth = true;
+                        break;
                     case "-help":
                         help = true;
                         break;
@@ -94,6 +101,8 @@ public class Application implements CommandLineRunner {
                 System.out.println("-f: File of Kass or AnEnPi result type");
                 System.out.println("-c: File of Kass or AnEnPi result type");
                 System.out.println("-o: Path to put the result file");
+                System.out.println("-fn: File output name");
+                System.out.println("-oe: Return only the ECs in both files");
                 System.out.println("-p KASS: Compare two files of Kass annotation result type");
                 System.out.println("-p AEPI: Compare two files of AnEnPi annotation result type");
                 System.out.println("-p KAAN: Compare a Kass file (-f argument) and AnEnPi file (-c argument)");
@@ -124,7 +133,8 @@ public class Application implements CommandLineRunner {
             System.out.println("fileC: " + fileC);
             System.out.println("pattern: " + pattern);
 
-            fileName = "ec-mapper_" + pattern + "-Result.txt";
+            if (fileName.equals(""))
+                fileName = "ec-mapper_" + pattern + "-Result.txt";
 
             if (pattern.equalsIgnoreCase("KASS")) {
 
@@ -253,40 +263,43 @@ public class Application implements CommandLineRunner {
 
                 writer = new BufferedWriter (new FileWriter(fileName, false));
 
-                writer.append("::::::::::::::::::::::::::::\n");
-                writer.append(":::: EC-MAPPER RESULTS  ::::\n");
-                writer.append("::::::::::::::::::::::::::::\n\n");
-                writer.append("1) EC numbers found in both files");
-                writer.append("\n\nTotal mapped EC: " + resultContaisInBoth.size());
-                writer.newLine();
-                writer.newLine();
-                Collections.sort(resultContaisInBoth);
-                for(String str: resultContaisInBoth) {
-                    writer.append(str);
-                    writer.newLine();
-                }
+                if (isOnlyECBoth){
 
-                if (resultOnlyInF.size() > 0) {
-                    writer.append("\n\n2) EC numbers found only in the file " + fileF);
-                    writer.append("\n\nTotal mapped EC: " + resultOnlyInF.size());
+                    printResultContainsInBoth(writer);
+
+                }else {
+
+                    writer.append("::::::::::::::::::::::::::::\n");
+                    writer.append(":::: EC-MAPPER RESULTS  ::::\n");
+                    writer.append("::::::::::::::::::::::::::::\n\n");
+                    writer.append("1) EC numbers found in both files");
+                    writer.append("\n\nTotal mapped EC: " + resultContaisInBoth.size());
                     writer.newLine();
                     writer.newLine();
-                    Collections.sort(resultOnlyInF);
-                    for (String str : resultOnlyInF) {
-                        writer.append(str);
+                    printResultContainsInBoth(writer);
+
+                    if (resultOnlyInF.size() > 0) {
+                        writer.append("\n\n2) EC numbers found only in the file " + fileF);
+                        writer.append("\n\nTotal mapped EC: " + resultOnlyInF.size());
                         writer.newLine();
+                        writer.newLine();
+                        Collections.sort(resultOnlyInF);
+                        for (String str : resultOnlyInF) {
+                            writer.append(str);
+                            writer.newLine();
+                        }
                     }
-                }
 
-                if (resultOnlyInC.size() > 0) {
-                    writer.append("\n\n3)EC numbers found only in the file " + fileC);
-                    writer.append("\n\nTotal mapped EC: " + resultOnlyInC.size());
-                    writer.newLine();
-                    writer.newLine();
-                    Collections.sort(resultOnlyInC);
-                    for (String str : resultOnlyInC) {
-                        writer.append(str);
+                    if (resultOnlyInC.size() > 0) {
+                        writer.append("\n\n3)EC numbers found only in the file " + fileC);
+                        writer.append("\n\nTotal mapped EC: " + resultOnlyInC.size());
                         writer.newLine();
+                        writer.newLine();
+                        Collections.sort(resultOnlyInC);
+                        for (String str : resultOnlyInC) {
+                            writer.append(str);
+                            writer.newLine();
+                        }
                     }
                 }
             }
@@ -298,5 +311,13 @@ public class Application implements CommandLineRunner {
         }
 
         return fileName;
+    }
+
+    private void printResultContainsInBoth(BufferedWriter writer) throws IOException {
+        Collections.sort(resultContaisInBoth);
+        for (String str : resultContaisInBoth) {
+            writer.append(str);
+            writer.newLine();
+        }
     }
 }
