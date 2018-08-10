@@ -47,6 +47,7 @@ public class Application implements CommandLineRunner {
     private List<String> resultContaisInBoth = new ArrayList<String>();
     private List<String> resultOnlyInC = new ArrayList<String>();
     private List<String> resultOnlyInF = new ArrayList<String>();
+    private String filePaths = "";
     private String fileF = null;
     private String fileC = null;
     private String pattern = null;
@@ -70,6 +71,9 @@ public class Application implements CommandLineRunner {
                 String argument = args[l];
 
                 switch (argument) {
+                    case "-fp":
+                        filePaths = args[l + 1];
+                        break;
                     case "-f":
                         fileF = args[l + 1];
                         break;
@@ -95,23 +99,24 @@ public class Application implements CommandLineRunner {
             }
 
             if (help) {
-                System.out.println("\nec-mapper-0.1.0: A process to compare data from Kass and AnEnPi annotations platform\n");
-                System.out.println("Example: java -jar ec-mapper-0.1.0.jar -f C:\\files\\Brugia_Kaas -c C:\\files\\listofECbmy.20.txt -p KAAN  -o C:\\data \n");
+                System.out.println("\nec-mapper-0.5.0: A process to compare data from Kass and AnEnPi annotations platform\n");
+                System.out.println("Example: java -jar ec-mapper-0.5.0.jar -f C:\\files\\Brugia_Kaas -c C:\\files\\listofECbmy.20.txt -p KAAN  -o C:\\data \n");
                 System.out.println("Arguments:\n");
                 System.out.println("-f: File of Kass or AnEnPi result type");
                 System.out.println("-c: File of Kass or AnEnPi result type");
                 System.out.println("-o: Path to put the result file");
                 System.out.println("-fn: File output name");
                 System.out.println("-oe: Return only the ECs in both files");
+                System.out.println("-fp: File with all the filenames to compare, available only to AnEnPi annotation result type");
                 System.out.println("-p KASS: Compare two files of Kass annotation result type");
                 System.out.println("-p AEPI: Compare two files of AnEnPi annotation result type");
                 System.out.println("-p KAAN: Compare a Kass file (-f argument) and AnEnPi file (-c argument)");
                 System.out.println("-help: Show the arguments");
             } else if (pattern == null) {
                 System.out.println("Please inform the pattern of comparation (put the -p argument).");
-            } else if (fileF == null) {
+            } else if (fileF == null && filePaths == null) {
                 System.out.println("Please inform the first file to compare (put the -f argument).");
-            } else if (fileC == null) {
+            } else if (fileC == null && filePaths == null) {
                 System.out.println("Please inform a file to compare (put the -c argument).");
             } else if (!pattern.equalsIgnoreCase("KASS") && !pattern.equalsIgnoreCase("AEPI") && !pattern.equalsIgnoreCase("KAAN")) {
                 System.out.println("Please inform a valid pattern to compare.");
@@ -121,12 +126,40 @@ public class Application implements CommandLineRunner {
         }
         return false;
     }
+
+    private String getFileName (String nameListaA, String nameListaB){
+        String fileName = getFileNameFromList(nameListaA) + "X" + getFileNameFromList(nameListaB);
+        return fileName;
+    }
+
+    private String getFileNameFromList(String nameLista) {
+        String[] firstName = nameLista.split("/");
+        String fileName = firstName[firstName.length-1];
+        String[] splitFileName = fileName.split("[.]");
+        return splitFileName[0];
+    }
+
     @Override
     public void run(String... args) throws Exception {
 
         System.out.println("Validating ec-mapper-0.1.0 arguments...");
 
-        if (argumentsValidation(args)) {
+        if (argumentsValidation(args) && !"".equals(filePaths)){
+            List<String> list = createFileList(filePaths, "", false);
+
+            for (int i = 0; i < list.size(); i++) {
+                //012345
+                for (int j = 0; j < list.size(); j++) {
+                    if (i!=j){
+                        callAEPI(list.get(i), list.get(j));
+                        String fileName = getFileName(list.get(i), list.get(j));
+                        compareFiles(listF, listC, fileName);
+                    }
+                }
+            }
+
+
+        }else if (argumentsValidation(args)) {
 
             System.out.println("Starting ec-mapper-0.1.0 process...");
             System.out.println("fileF: " + fileF);
@@ -156,19 +189,7 @@ public class Application implements CommandLineRunner {
 
             } else if (pattern.equalsIgnoreCase("AEPI")) {
 
-                log.info(">>>> Creating array of file -f");
-
-                listF = createList(fileF, pattern, false);
-
-                log.info(">>>> Array of file -f created");
-
-                log.info(">>>> Creating array of file -f");
-
-                listC = createList(fileC, pattern, false);
-
-                log.info(">>>> Array of file -c created");
-
-                log.info(">>>> Comparing files...");
+                callAEPI(fileF, fileC);
 
             } else if (pattern.equalsIgnoreCase("KAAN")) {
 
@@ -190,34 +211,84 @@ public class Application implements CommandLineRunner {
 
             }
 
-            if ((listF.size() > 0) && (listC.size() > 0)) {
-
-                resultOnlyInC.addAll(listC);
-                resultOnlyInF.addAll(listF);
-
-                for (String keyF : listF) {
-                    if (listC.contains(keyF)) {
-                        resultContaisInBoth.add(keyF);
-                        resultOnlyInC.remove(keyF);
-                        resultOnlyInF.remove(keyF);
-                    }
-                }
-
-            } else if (listF.size() == 0) {
-                log.info(">>>>> Result: File -f do not contains EC numbers");
-            } else if (listC.size() == 0) {
-                log.info(">>>>> Result: File -c do not contains EC numbers");
-            }
-
-            fileName = printFiles(fileName);
-
-            if (resultContaisInBoth.size()>0) {
-                System.out.println("Ec-mapper process finished. See the file '" + fileName + "' created.");
-            }else{
-                System.out.println("Ec-mapper process finished. There was no similar data found at the files..");
-            }
+            compareFiles(listF, listC, fileName);
         }
 
+    }
+
+    private void compareFiles(List<String> listF, List<String> listC, String fileName) {
+        if ((listF.size() > 0) && (listC.size() > 0)) {
+
+            resultOnlyInC.addAll(listC);
+            resultOnlyInF.addAll(listF);
+
+            for (String keyF : listF) {
+                if (listC.contains(keyF)) {
+                    resultContaisInBoth.add(keyF);
+                    resultOnlyInC.remove(keyF);
+                    resultOnlyInF.remove(keyF);
+                }
+            }
+
+        } else if (listF.size() == 0) {
+            log.info(">>>>> Result: File -f do not contains EC numbers");
+        } else if (listC.size() == 0) {
+            log.info(">>>>> Result: File -c do not contains EC numbers");
+        }
+
+        fileName = printFiles(fileName);
+
+        if (resultContaisInBoth.size()>0) {
+            System.out.println("Ec-mapper process finished. See the file '" + fileName + "' created.");
+        }else{
+            System.out.println("Ec-mapper process finished. There was no similar data found at the files..");
+        }
+    }
+
+    private void callAEPI(String fileF, String fileC) {
+        log.info(">>>> Creating array of file -f");
+
+        listF = createList(fileF, pattern, false);
+
+        log.info(">>>> Array of file -f created");
+
+        log.info(">>>> Creating array of file -f");
+
+        listC = createList(fileC, pattern, false);
+
+        log.info(">>>> Array of file -c created");
+
+        log.info(">>>> Comparing files...");
+    }
+
+    private List<String> createFileList(String file, String pattern, boolean withPattern){
+        List<String> list = new ArrayList<String>();
+        try {
+            try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+                for(String line; (line = br.readLine()) != null; ) {
+                    if (line.contains(pattern) && withPattern){
+                        int start = line.indexOf(pattern)+4;
+                        int end = line.lastIndexOf("]");
+                        String data = line.substring(start,end);
+
+                        if (data.contains(" ")){
+                            data = data.replaceAll("EC:","");
+                            String[] breaking = data.split(" ");
+                            for (String ecNumber : breaking) {
+                                if (!list.contains(ecNumber)) list.add(ecNumber);
+                            }
+                        }else {
+                            if (!list.contains(data)) list.add(data);
+                        }
+                    }else if (!withPattern){
+                        if (!list.contains(line)) list.add(line);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+        return list;
     }
 
     private List<String> createList(String file, String pattern, boolean withPattern){
