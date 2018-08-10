@@ -154,6 +154,8 @@ public class Application implements CommandLineRunner {
                         callAEPI(list.get(i), list.get(j));
                         String fileName = getFileName(list.get(i), list.get(j));
                         compareFiles(listF, listC, fileName);
+                        listF = null;
+                        listC = null;
                     }
                 }
             }
