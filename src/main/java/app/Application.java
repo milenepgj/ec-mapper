@@ -148,20 +148,7 @@ public class Application implements CommandLineRunner {
 
         if (argumentsValidation(args) && !"".equals(filePaths)){
 
-            List<String> list = createFileList(filePaths, "", false);
-
-            for (int f = 0; f < list.size(); f++) {
-                int indC = f+1;
-                if (indC != f){
-                    for (int c = indC; c < list.size(); c++) {
-                        restartObjects();
-                        if (f!=c){
-                            doAnEnPiComparedItens(list, f, c);
-                        }
-                    }
-                }
-            }
-
+            compareAllAnEnPiFiles();
 
         }else if (argumentsValidation(args)) {
 
@@ -218,6 +205,22 @@ public class Application implements CommandLineRunner {
             compareFiles(listF, listC, fileName);
         }
 
+    }
+
+    private void compareAllAnEnPiFiles() {
+        List<String> list = createFileList(filePaths, "", false);
+
+        for (int f = 0; f < list.size(); f++) {
+            int indC = f+1;
+            if (indC != f){
+                for (int c = indC; c < list.size(); c++) {
+                    restartObjects();
+                    if (f!=c){
+                        doAnEnPiComparedItens(list, f, c);
+                    }
+                }
+            }
+        }
     }
 
     private void doAnEnPiComparedItens(List<String> list, int f, int c) {
