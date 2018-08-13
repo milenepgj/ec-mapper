@@ -127,8 +127,10 @@ public class Application implements CommandLineRunner {
         return false;
     }
 
-    private String getFileName (String nameListaA, String nameListaB){
-        String fileName = getFileNameFromList(nameListaA) + "X" + getFileNameFromList(nameListaB);
+    private String getFileName (String nameListaF, String nameListaC){
+        fileF = getFileNameFromList(nameListaF);
+        fileC = getFileNameFromList(nameListaC);
+        String fileName = fileF + "X" + fileC;
         return fileName;
     }
 
@@ -145,17 +147,17 @@ public class Application implements CommandLineRunner {
         System.out.println("Validating ec-mapper-0.1.0 arguments...");
 
         if (argumentsValidation(args) && !"".equals(filePaths)){
+
             List<String> list = createFileList(filePaths, "", false);
 
-            for (int i = 0; i < list.size(); i++) {
-                //012345
-                for (int j = 0; j < list.size(); j++) {
-                    if (i!=j){
-                        callAEPI(list.get(i), list.get(j));
-                        String fileName = getFileName(list.get(i), list.get(j));
-                        compareFiles(listF, listC, fileName);
-                        listF = null;
-                        listC = null;
+            for (int f = 0; f < list.size(); f++) {
+                int indC = f+1;
+                if (indC != f){
+                    for (int c = indC; c < list.size(); c++) {
+                        restartObjects();
+                        if (f!=c){
+                            doAnEnPiComparedItens(list, f, c);
+                        }
                     }
                 }
             }
@@ -216,6 +218,24 @@ public class Application implements CommandLineRunner {
             compareFiles(listF, listC, fileName);
         }
 
+    }
+
+    private void doAnEnPiComparedItens(List<String> list, int f, int c) {
+        isOnlyECBoth = false;
+        callAEPI(list.get(f), list.get(c));
+        String fileName = getFileName(list.get(f), list.get(c));
+        compareFiles(listF, listC, fileName);
+        fileName = "OnlyCommomECs_" + fileName;
+        isOnlyECBoth = true;
+        printFiles(fileName);
+    }
+
+    private void restartObjects() {
+        listF = null;
+        listC = null;
+        resultContaisInBoth = new ArrayList<String>();
+        resultOnlyInC = new ArrayList<String>();
+        resultOnlyInF = new ArrayList<String>();
     }
 
     private void compareFiles(List<String> listF, List<String> listC, String fileName) {
