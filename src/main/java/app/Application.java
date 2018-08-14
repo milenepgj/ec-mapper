@@ -35,9 +35,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @SpringBootApplication
 @PropertySource("application.properties")
@@ -47,6 +45,7 @@ public class Application implements CommandLineRunner {
     private List<String> resultContaisInBoth = new ArrayList<String>();
     private List<String> resultOnlyInC = new ArrayList<String>();
     private List<String> resultOnlyInF = new ArrayList<String>();
+    private HashMap<String, Integer> resultBothWithTotal = new HashMap<String, Integer>();
     private String filePaths = "";
     private String fileF = null;
     private String fileC = null;
@@ -221,6 +220,18 @@ public class Application implements CommandLineRunner {
                 }
             }
         }
+        printCSV("resultAllAnEnPiFiles.csv");
+    }
+
+    private void printCSV(String fileName) {
+
+        try {
+            BufferedWriter writer = new BufferedWriter (new FileWriter(fileName, false));
+            printResultOnCsv(writer);
+            if (writer != null) writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void doAnEnPiComparedItens(List<String> list, int f, int c) {
@@ -231,6 +242,7 @@ public class Application implements CommandLineRunner {
         fileName = "OnlyCommomECs_" + fileName;
         isOnlyECBoth = true;
         printFiles(fileName);
+        resultBothWithTotal.put(fileName, resultContaisInBoth.size());
     }
 
     private void restartObjects() {
@@ -414,6 +426,21 @@ public class Application implements CommandLineRunner {
         for (String str : resultContaisInBoth) {
             writer.append(str);
             writer.newLine();
+        }
+    }
+
+    private void printResultOnCsv(BufferedWriter writer) throws IOException {
+        Set<String> keys = resultBothWithTotal.keySet();
+        writer.append("Filename" + ";" + "Compared Organisms" + ";" + "# Common ECs");
+        writer.newLine();
+        for (String key : keys){
+            String keyToPrint = key.replaceAll("OnlyCommomECs_","").replaceAll("X", " x ").replaceAll("listofEC","").toUpperCase();
+            if(key != null){
+                writer.append(key + ";");
+                writer.append(keyToPrint + ";");
+                writer.append(resultBothWithTotal.get(key).toString());
+                writer.newLine();
+            }
         }
     }
 }
