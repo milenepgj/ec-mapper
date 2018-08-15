@@ -27,6 +27,8 @@ package app;
 
  */
 
+import dto.Expasy;
+import http.ExpasyRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -56,6 +58,9 @@ public class Application implements CommandLineRunner {
     private String fileName = "";
     private boolean help = false;
     private boolean isOnlyECBoth = false;
+    private boolean isPrintCsv = false;
+    private boolean isGetECDescription = false;
+    private boolean isGetUniProtAnnotation = false;
 
     public static void main(String args[]) {
         SpringApplication.run(Application.class, args);
@@ -91,6 +96,15 @@ public class Application implements CommandLineRunner {
                     case "-oe":
                         isOnlyECBoth = true;
                         break;
+                    case "-csv":
+                        isPrintCsv = true;
+                        break;
+                    case "-enz":
+                        isGetECDescription = true;
+                        break;
+                    case "-uniprot":
+                        isGetUniProtAnnotation = true;
+                        break;
                     case "-help":
                         help = true;
                         break;
@@ -110,6 +124,9 @@ public class Application implements CommandLineRunner {
                 System.out.println("-p KASS: Compare two files of Kass annotation result type");
                 System.out.println("-p AEPI: Compare two files of AnEnPi annotation result type");
                 System.out.println("-p KAAN: Compare a Kass file (-f argument) and AnEnPi file (-c argument)");
+                System.out.println("-csv: Create CSV file with all to all AnEnPi annotation results");
+                System.out.println("-enz: Get Enzyme description on Expasy");
+                System.out.println("-uniprot: Get protein data on UniProtxSwissProt");
                 System.out.println("-help: Show the arguments");
             } else if (pattern == null) {
                 System.out.println("Please inform the pattern of comparation (put the -p argument).");
@@ -147,7 +164,7 @@ public class Application implements CommandLineRunner {
 
         if (argumentsValidation(args) && !"".equals(filePaths)){
 
-            compareAllAnEnPiFiles();
+            compareAllAnEnPiFiles(isPrintCsv);
 
         }else if (argumentsValidation(args)) {
 
@@ -206,7 +223,7 @@ public class Application implements CommandLineRunner {
 
     }
 
-    private void compareAllAnEnPiFiles() {
+    private void compareAllAnEnPiFiles(boolean isPrintCsv) {
         List<String> list = createFileList(filePaths, "", false);
 
         for (int f = 0; f < list.size(); f++) {
@@ -220,7 +237,8 @@ public class Application implements CommandLineRunner {
                 }
             }
         }
-        printCSV("resultAllAnEnPiFiles.csv");
+        if (isPrintCsv)
+            printCSV("resultAllAnEnPiFiles.csv");
     }
 
     private void printCSV(String fileName) {
@@ -373,7 +391,7 @@ public class Application implements CommandLineRunner {
 
                 if (isOnlyECBoth){
 
-                    printResultContainsInBoth(writer);
+                    printResultContainsInBoth(writer, isGetECDescription, isGetUniProtAnnotation);
 
                 }else {
 
@@ -384,7 +402,7 @@ public class Application implements CommandLineRunner {
                     writer.append("\n\nTotal mapped EC: " + resultContaisInBoth.size());
                     writer.newLine();
                     writer.newLine();
-                    printResultContainsInBoth(writer);
+                    printResultContainsInBoth(writer, isGetECDescription, isGetUniProtAnnotation);
 
                     if (resultOnlyInF.size() > 0) {
                         writer.append("\n\n2) EC numbers found only in the file " + fileF);
@@ -421,10 +439,16 @@ public class Application implements CommandLineRunner {
         return fileName;
     }
 
-    private void printResultContainsInBoth(BufferedWriter writer) throws IOException {
+    private void printResultContainsInBoth(BufferedWriter writer, boolean isGetECDescription, boolean isGetUniProtAnnotation) throws IOException {
         Collections.sort(resultContaisInBoth);
         for (String str : resultContaisInBoth) {
             writer.append(str);
+
+            if (isGetECDescription){
+                Expasy expasy = new ExpasyRequest().getExpasyECData(str, isGetUniProtAnnotation);
+                if (expasy != null)
+                    writer.append(expasy.getDescription());
+            }
             writer.newLine();
         }
     }
