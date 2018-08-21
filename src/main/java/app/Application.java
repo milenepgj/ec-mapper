@@ -27,8 +27,9 @@ package app;
 
  */
 
-import dto.Expasy;
-import http.ExpasyRequest;
+import app.util.FileUtil;
+import com.bioinfo.dto.Expasy;
+import com.bioinfo.http.ExpasyRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -61,6 +62,7 @@ public class Application implements CommandLineRunner {
     private boolean isPrintCsv = false;
     private boolean isGetECDescription = false;
     private boolean isGetUniProtAnnotation = false;
+    private boolean isMergeFiles = false;
 
     public static void main(String args[]) {
         SpringApplication.run(Application.class, args);
@@ -75,6 +77,10 @@ public class Application implements CommandLineRunner {
                 String argument = args[l];
 
                 switch (argument) {
+                    case "-m":
+                        filePaths = args[l + 1];
+                        isMergeFiles = true;
+                        break;
                     case "-fp":
                         filePaths = args[l + 1];
                         break;
@@ -115,6 +121,7 @@ public class Application implements CommandLineRunner {
                 System.out.println("\nec-mapper-0.5.0: A process to compare data from Kass and AnEnPi annotations platform\n");
                 System.out.println("Example: java -jar ec-mapper-0.5.0.jar -f C:\\files\\Brugia_Kaas -c C:\\files\\listofECbmy.20.txt -p KAAN  -o C:\\data \n");
                 System.out.println("Arguments:\n");
+                System.out.println("-m: Path of EC files to merge");
                 System.out.println("-f: File of Kass or AnEnPi result type");
                 System.out.println("-c: File of Kass or AnEnPi result type");
                 System.out.println("-o: Path to put the result file");
@@ -128,13 +135,13 @@ public class Application implements CommandLineRunner {
                 System.out.println("-enz: Get Enzyme description on Expasy");
                 System.out.println("-uniprot: Get protein data on UniProtxSwissProt");
                 System.out.println("-help: Show the arguments");
-            } else if (pattern == null) {
+            } else if (pattern == null && !isMergeFiles) {
                 System.out.println("Please inform the pattern of comparation (put the -p argument).");
             } else if (fileF == null && filePaths == null) {
                 System.out.println("Please inform the first file to compare (put the -f argument).");
             } else if (fileC == null && filePaths == null) {
                 System.out.println("Please inform a file to compare (put the -c argument).");
-            } else if (!pattern.equalsIgnoreCase("KASS") && !pattern.equalsIgnoreCase("AEPI") && !pattern.equalsIgnoreCase("KAAN")) {
+            } else if (!isMergeFiles && !pattern.equalsIgnoreCase("KASS") && !pattern.equalsIgnoreCase("AEPI") && !pattern.equalsIgnoreCase("KAAN")) {
                 System.out.println("Please inform a valid pattern to compare.");
             } else {
                 return true;
@@ -162,7 +169,13 @@ public class Application implements CommandLineRunner {
 
         System.out.println("Validating ec-mapper-0.1.0 arguments...");
 
-        if (argumentsValidation(args) && !"".equals(filePaths)){
+        if (argumentsValidation(args) && isMergeFiles && !"".equals(filePaths)){
+
+            String returnFunction = FileUtil.mergeECFastaFiles(filePaths);
+
+            System.out.println(returnFunction);
+
+        }else if (argumentsValidation(args) && !"".equals(filePaths)){
 
             compareAllAnEnPiFiles(isPrintCsv);
 
