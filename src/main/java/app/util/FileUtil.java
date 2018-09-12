@@ -1,15 +1,26 @@
 package app.util;
 
+import app.Application;
+import com.bioinfo.dto.Fasta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(FileUtil.class);
 
     private static String PATH_OUT = "/out/";
 
@@ -84,5 +95,32 @@ public class FileUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Fasta> getFastaDataFromFile(String file, String pattern){
+        List<Fasta> list = new ArrayList<Fasta>();
+        Fasta fasta = new Fasta();
+        try {
+            try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+                for(String line; (line = br.readLine()) != null; ) {
+
+                    String[] splitedLine = line.split(pattern);
+
+                    fasta.setProteinId(splitedLine[0]);
+                    fasta.setBlastHit(splitedLine[1]);
+                    fasta.setEntryKeggBlastHit(splitedLine[2]);
+
+                    if (splitedLine.length == 5){
+                        fasta.seteValue(splitedLine[3] + " " + splitedLine[4]);
+                    }else{
+                        fasta.seteValue(splitedLine[3]);
+                    }
+                    list.add(fasta);
+                }
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+        return list;
     }
 }
