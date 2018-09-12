@@ -2,6 +2,7 @@ package app.util;
 
 import app.Application;
 import com.bioinfo.dto.Fasta;
+import com.bioinfo.dto.ProteinData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,5 +123,48 @@ public class FileUtil {
             log.error(e.getMessage());
         }
         return list;
+    }
+
+
+    public static List<ProteinData> getProteinDataListFromProteomeFile(String file) {
+
+        List<ProteinData> list = new ArrayList<>();
+
+        try {
+            String identityLine = "";
+            String aminoacidLine = "";
+            ProteinData proteinData = new ProteinData();
+
+            try(BufferedReader br = new BufferedReader(new FileReader(file))) {
+
+                for(String line; (line = br.readLine()) != null; ) {
+
+                    //read new line
+                    if (identityLine == ""){
+                        identityLine = getLineId(proteinData, line);
+                    }else if (identityLine != "" && line.contains(">")){
+                        //Join aminoacid data
+                        proteinData.setAminoacidData(aminoacidLine);
+                        list.add(proteinData);
+
+                        identityLine = getLineId(proteinData, line);
+                    }else{
+                        aminoacidLine = aminoacidLine + line;
+                    }
+
+                }
+            }
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+        return list;
+    }
+
+    private static String getLineId(ProteinData proteinData, String line) {
+        String identityLine;
+        identityLine = line;
+        String[] splitedLine = identityLine.split(" ");
+        proteinData.setGeneId(splitedLine[0]);
+        return identityLine;
     }
 }
