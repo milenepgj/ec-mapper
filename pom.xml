@@ -35,6 +35,11 @@
             <artifactId>bioServices</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>bio.domain</groupId>
+            <artifactId>bioDomain</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 

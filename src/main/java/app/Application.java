@@ -28,8 +28,10 @@ package app;
  */
 
 import app.util.FileUtil;
-import com.bioinfo.dto.Expasy;
+import bio.domain.Expasy;
+import bio.domain.Fasta;
 import com.bioinfo.http.ExpasyRequest;
+import com.bioinfo.http.KEGGApiRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -69,6 +71,9 @@ public class Application implements CommandLineRunner {
     }
 
     private boolean argumentsValidation(String... args){
+
+        List<Fasta> list = new FileUtil().getFastaDataFromFile("/home/milene.guimaraes/Documents/Pessoal/amaranta/DADOS_AMAR_ARTIGO/ANENPI/dados_amaranta/Canto/Parsed/out/EC_1.1.1.1.merged.txt", " ");
+        new KEGGApiRequest().getKeggApiInfo("edi:EDI_149100");
 
         if (args == null || args.length == 0){
             System.out.println("Please inform the arguments. For more explanation, put -help argument.");

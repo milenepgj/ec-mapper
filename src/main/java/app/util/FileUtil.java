@@ -1,8 +1,7 @@
 package app.util;
 
-import app.Application;
-import com.bioinfo.dto.Fasta;
-import com.bioinfo.dto.ProteinData;
+import bio.domain.Fasta;
+import bio.domain.ProteinData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,10 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -99,14 +95,14 @@ public class FileUtil {
     }
 
     public List<Fasta> getFastaDataFromFile(String file, String pattern){
-        List<Fasta> list = new ArrayList<Fasta>();
-        Fasta fasta = new Fasta();
+        List<Fasta> list = new ArrayList<>();
         try {
             try(BufferedReader br = new BufferedReader(new FileReader(file))) {
                 for(String line; (line = br.readLine()) != null; ) {
 
                     String[] splitedLine = line.split(pattern);
 
+                    Fasta fasta = new Fasta();
                     fasta.setProteinId(splitedLine[0]);
                     fasta.setBlastHit(splitedLine[1]);
                     fasta.setEntryKeggBlastHit(splitedLine[2]);
@@ -122,9 +118,17 @@ public class FileUtil {
         } catch (IOException e) {
             log.error(e.getMessage());
         }
-        return list;
+
+        return removeDuplicateFasta(list);
     }
 
+    private List<Fasta> removeDuplicateFasta(List<Fasta> fastaList){
+        Collection<Fasta> coll = fastaList.stream()
+                .<Map<String, Fasta>> collect(HashMap::new,(m,e)->m.put(e.getProteinId(), e), Map::putAll)
+                .values();
+
+        return Collections.list(Collections.enumeration(coll));
+    }
 
     public static List<ProteinData> getProteinDataListFromProteomeFile(String file) {
 
@@ -164,7 +168,7 @@ public class FileUtil {
         String identityLine;
         identityLine = line;
         String[] splitedLine = identityLine.split(" ");
-        proteinData.setGeneId(splitedLine[0]);
+        proteinData.setProteinId(splitedLine[0]);
         return identityLine;
     }
 }
