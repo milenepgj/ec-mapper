@@ -29,9 +29,7 @@ package app;
 
 import app.util.FileUtil;
 import bio.domain.Expasy;
-import bio.domain.Fasta;
 import com.bioinfo.http.ExpasyRequest;
-import com.bioinfo.http.KEGGApiRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -66,9 +64,11 @@ public class Application implements CommandLineRunner {
     private boolean isGetUniProtAnnotation = false;
     private boolean isMergeFiles = false;
 
+/*
     public static void main(String args[]) {
         SpringApplication.run(Application.class, args);
     }
+*/
 
     private boolean argumentsValidation(String... args){
 

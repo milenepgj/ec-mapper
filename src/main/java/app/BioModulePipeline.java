@@ -98,6 +98,7 @@ public class BioModulePipeline implements CommandLineRunner {
 
 //            String pathToRead = "/home/milene.guimaraes/Documents/Pessoal/amaranta/DADOS_AMAR_ARTIGO/ANENPI/dados_amaranta/Canto/Parsed";
 
+            KEGGRequest keggRequest = new KEGGRequest();
             Organism organism = new Organism();
             organism.setName(organismName);
 
@@ -124,6 +125,7 @@ public class BioModulePipeline implements CommandLineRunner {
 
             //Ir ao KEGG buscar os KOs
             for (int j = 0; j < organism.getEcList().size(); j++) {
+
                 EnzymeClass ec = organism.getEcList().get(j);
                 String kosEc = "";
                 for (int e = 0; e < ec.getFastaList().size(); e++) {
@@ -151,7 +153,7 @@ public class BioModulePipeline implements CommandLineRunner {
 
                 //Buscar módulos e verificar se são completos
                 if (kosEc != ""){
-                    List<KEGGModule> modules = new KEGGRequest().getModules(kosEc);
+                    List<KEGGModule> modules = keggRequest.getModules(kosEc);
                     ec.setModules(modules);
                 }
             }
