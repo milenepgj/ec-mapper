@@ -72,9 +72,6 @@ public class Application implements CommandLineRunner {
 
     private boolean argumentsValidation(String... args){
 
-        List<Fasta> list = new FileUtil().getFastaDataFromFile("/home/milene.guimaraes/Documents/Pessoal/amaranta/DADOS_AMAR_ARTIGO/ANENPI/dados_amaranta/Canto/Parsed/out/EC_1.1.1.1.merged.txt", " ");
-        new KEGGApiRequest().getKeggApiInfo("edi:EDI_149100");
-
         if (args == null || args.length == 0){
             System.out.println("Please inform the arguments. For more explanation, put -help argument.");
         }else {

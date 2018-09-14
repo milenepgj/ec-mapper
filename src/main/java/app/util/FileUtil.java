@@ -145,30 +145,45 @@ public class FileUtil {
 
                     //read new line
                     if (identityLine == ""){
-                        identityLine = getLineId(proteinData, line);
+                        identityLine = line;
+                        proteinData = setProteinId(proteinData, line);
                     }else if (identityLine != "" && line.contains(">")){
                         //Join aminoacid data
-                        proteinData.setAminoacidData(aminoacidLine);
-                        list.add(proteinData);
+                        joinAminoacidData(list, aminoacidLine, proteinData);
 
-                        identityLine = getLineId(proteinData, line);
+                        identityLine = line;
+                        proteinData = setProteinId(proteinData, line);
+
+                        aminoacidLine = "";
+
                     }else{
-                        aminoacidLine = aminoacidLine + line;
+                        if (aminoacidLine != "")
+                            aminoacidLine = aminoacidLine + "\n" + line;
+                        else
+                            aminoacidLine = line;
                     }
 
                 }
             }
+
+            //Última linha
+            joinAminoacidData(list, aminoacidLine, proteinData);
+
         } catch (IOException e) {
             log.error(e.getMessage());
         }
         return list;
     }
 
-    private static String getLineId(ProteinData proteinData, String line) {
-        String identityLine;
-        identityLine = line;
-        String[] splitedLine = identityLine.split(" ");
+    private static void joinAminoacidData(List<ProteinData> list, String aminoacidLine, ProteinData proteinData) {
+        proteinData.setAminoacidData(aminoacidLine);
+        list.add(proteinData);
+    }
+
+    private static ProteinData setProteinId(ProteinData proteinData, String line) {
+        String[] splitedLine = line.split(" ");
+        proteinData = new ProteinData();
         proteinData.setProteinId(splitedLine[0]);
-        return identityLine;
+        return proteinData;
     }
 }
