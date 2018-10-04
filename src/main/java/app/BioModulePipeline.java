@@ -3,7 +3,6 @@ package app;
 
 import app.util.FileUtil;
 import bio.domain.*;
-import com.bioinfo.http.ExpasyRequest;
 import com.bioinfo.http.KEGGApiRequest;
 import com.bioinfo.http.KEGGRequest;
 import org.slf4j.Logger;
@@ -12,13 +11,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
-import sun.security.pkcs11.Secmod;
+import util.UtilMethods;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Stream;
 
 @SpringBootApplication
@@ -160,15 +160,21 @@ public class BioModulePipeline implements CommandLineRunner {
 
             organism.setProteinDataList(new FileUtil().getProteinDataListFromProteomeFile(proteomFile));
 
-            System.out.println("Organism name:" + organism.getName());
-            System.out.println("Organism modules:");
+            System.out.println("::::: Organism name:" + organism.getName());
+            System.out.println(":::: Organism modules:");
             for (int p = 0; p < organism.getEcList().size(); p++) {
                 EnzymeClass ec = organism.getEcList().get(p);
 
                 for (int m = 0; m < ec.getModules().size(); m++) {
-                    System.out.println("Module name:" + ec.getModules().get(m).getModule());
-                    System.out.println("KOs:" + ec.getModules().get(m).getKos().toString());
+                    System.out.println(":::Module name:" + ec.getModules().get(m).getModule());
+                    System.out.println("Module's KOs:" + ec.getModules().get(m).getKos().toString());
+                    System.out.println("EC's KOs:" + ec.getModules().get(m).getKosFromEC().toString()); //sendKoList
                     System.out.println("Is complete?" + ec.getModules().get(m).isComplete());
+                    if (!ec.getModules().get(m).isComplete()){
+                        //Se não estiver completo, mostra quais KOs pertencem apenas a modulo ou à lista de Kos do EC
+                        System.out.println("   - KOs only on Module Kos' list:" + new UtilMethods().getMinusList(ec.getModules().get(m).getKos(), ec.getModules().get(m).getKosFromEC()).toString());
+                        System.out.println("   - KOs only on EC Kos' list:" + new UtilMethods().getMinusList(ec.getModules().get(m).getKosFromEC(), ec.getModules().get(m).getKos()).toString());
+                    }
                 }
             }
 
