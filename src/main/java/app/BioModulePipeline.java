@@ -13,10 +13,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
 import util.UtilMethods;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -87,6 +92,16 @@ public class BioModulePipeline implements CommandLineRunner {
         System.out.println("Validating ec-mapper-0.1.0 arguments...");
 
         if (argumentsValidation(args) && !"".equals(filesPath)){
+
+/*            Organism o = new Organism();
+            o.setName("TESTESTESTE");
+            o.getProteinDataList().add(new ProteinData("PTN1", "HUIAHUIAHUIHAUIHAI"));
+            o.getEcList().add(new EnzymeClass("7777"));
+            o.getEcList().get(0).getModules().add(new KEGGModule("M1", true));
+            o.getEcList().get(0).getModules().get(0).getKosFromEC().add("KOe1");
+            o.getEcList().get(0).getModules().get(0).getKos().add("KOe1");
+            printResultProteinData(o);
+            printResultIdentificatedEnzimesModules(o);*/
             organismAnalises(organismName, filesPath, proteomFile);
 
         }
@@ -160,24 +175,9 @@ public class BioModulePipeline implements CommandLineRunner {
 
             organism.setProteinDataList(new FileUtil().getProteinDataListFromProteomeFile(proteomFile));
 
-            System.out.println("::::: Organism name:" + organism.getName());
-            System.out.println(":::: Organism modules:");
-            for (int p = 0; p < organism.getEcList().size(); p++) {
-                EnzymeClass ec = organism.getEcList().get(p);
-
-                for (int m = 0; m < ec.getModules().size(); m++) {
-                    System.out.println(":::Module name:" + ec.getModules().get(m).getModule());
-                    System.out.println("Module's KOs:" + ec.getModules().get(m).getKos().toString());
-                    System.out.println("EC's KOs:" + ec.getModules().get(m).getKosFromEC().toString()); //sendKoList
-                    System.out.println("Is complete?" + ec.getModules().get(m).isComplete());
-                    if (!ec.getModules().get(m).isComplete()){
-                        //Se não estiver completo, mostra quais KOs pertencem apenas a modulo ou à lista de Kos do EC
-                        System.out.println("   - KOs only on Module Kos' list:" + new UtilMethods().getMinusList(ec.getModules().get(m).getKos(), ec.getModules().get(m).getKosFromEC()).toString());
-                        System.out.println("   - KOs only on EC Kos' list:" + new UtilMethods().getMinusList(ec.getModules().get(m).getKosFromEC(), ec.getModules().get(m).getKos()).toString());
-                    }
-                }
-            }
-
+            //Impressão do resultado
+            printResultProteinData(organism);
+            printResultIdentificatedEnzimesModules(organism);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -188,5 +188,218 @@ public class BioModulePipeline implements CommandLineRunner {
 
     }
 
+    private static void printResult(Organism organism){
+        String fileName = organism.getName() +"_biomodulepipeline.out.txt";
 
+        try {
+
+            BufferedWriter writer = null;
+
+            if (organism.getEcList().size()>0){
+
+                writer = new BufferedWriter (new FileWriter(fileName, false));
+
+                List<EnzymeClass> completeModulesList = new ArrayList<>();
+
+                writer.append("ORGANISM:" + organism.getName() + "\n");
+                writer.newLine();
+
+                EnzymeClass ecComplete = new EnzymeClass();
+
+                for (int i = 0; i < organism.getEcList().size(); i++) {
+
+                    writer.append("-------------------------   PROTEIN DATA");
+                    writer.newLine();
+
+                    for (int j = 0; j < organism.getProteinDataList().size(); j++) {
+                        ProteinData pd = organism.getProteinDataList().get(j);
+                        writer.append("PROTEINID:" + pd.getProteinId() + "\n");
+                        writer.append("AMINODATA:" + pd.getAminoacidData() + "\n");
+                    }
+
+                    writer.append("-------------------------   IDENTIFICATED ENZIMES");
+                    writer.newLine();
+
+                    EnzymeClass ec = organism.getEcList().get(i);
+                    ecComplete = new EnzymeClass(ec.getEcNumber());
+
+                    writer.append("EC " + ec.getEcNumber() + "\n");
+                    writer.append(":: Organism modules:");
+                    writer.newLine();
+
+                    for (int m = 0; m < ec.getModules().size(); m++) {
+                        writer.append("MNAME " + ec.getModules().get(m).getModule()+ "\n");
+                        writer.append("::    Module's KOs:"+ "\n");
+                        writer.append("MOKs " + ec.getModules().get(m).getKos().toString()+ "\n");
+                        writer.append("::    EC's KOs:"+ "\n"); //sendKoList
+                        writer.append("EKOs " + ec.getModules().get(m).getKosFromEC().toString()+ "\n"); //sendKoList
+                        writer.append("COMPLETE " + ec.getModules().get(m).isComplete()+ "\n");
+                        if (!ec.getModules().get(m).isComplete()){
+                            //Se não estiver completo, mostra quais KOs pertencem apenas a modulo ou à lista de Kos do EC
+                            writer.append("    - MKOSONLY " + new UtilMethods().getMinusList(ec.getModules().get(m).getKos(), ec.getModules().get(m).getKosFromEC()).toString()+ "\n");
+                            writer.append("    - EKOSONLY " + new UtilMethods().getMinusList(ec.getModules().get(m).getKosFromEC(), ec.getModules().get(m).getKos()).toString()+ "\n");
+                        }else{
+                            ecComplete.getModules().add(ec.getModules().get(m));
+                        }
+                    }
+
+                    if (ecComplete.getModules().size() > 0) {
+
+                        completeModulesList.add(ecComplete);
+                    }
+                }
+
+                writer.newLine();
+                writer.append("-------------------------   IDENTIFICATED COMPLETE MODULES");
+                writer.newLine();
+
+                //Lista módulos completos
+                for (int i = 0; i < completeModulesList.size() ; i++) {
+                    EnzymeClass complete = completeModulesList.get(i);
+                    writer.append("EC " + complete.getEcNumber()+ "\n");
+
+                    for (int m = 0; m < complete.getModules().size(); m++) {
+                        writer.append("COMPLETE MNAME " + complete.getModules().get(m).getModule()+ "\n");
+                        writer.append("::    Module's KOs:"+ "\n");
+                        writer.append("CMOKs " + complete.getModules().get(m).getKos().toString()+ "\n");
+                        writer.append("::    EC's KOs:" + complete.getModules().get(m).getKosFromEC().toString()+ "\n"); //sendKoList
+                        writer.append("CEKOs " + complete.getModules().get(m).getKosFromEC().toString()+ "\n"); //sendKoList
+                    }
+
+                }
+
+            }
+
+            if (writer != null) writer.close();
+
+            System.out.println("Arquivo de resultados [" + fileName + "] gerado com sucesso");
+
+        }catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private static void printResultProteinData(Organism organism){
+
+        String fileName = organism.getName() +"_proteinDataBMPipeline.out.txt";
+
+        try {
+
+            BufferedWriter writer = null;
+
+            if (organism.getEcList().size()>0){
+
+                writer = new BufferedWriter (new FileWriter(fileName, false));
+
+                List<EnzymeClass> completeModulesList = new ArrayList<>();
+
+                writer.append("ORGANISM:" + organism.getName() + "\n");
+                writer.newLine();
+
+                EnzymeClass ecComplete = new EnzymeClass();
+
+                for (int i = 0; i < organism.getEcList().size(); i++) {
+
+                    writer.append("-------------------------   PROTEIN DATA");
+                    writer.newLine();
+
+                    for (int j = 0; j < organism.getProteinDataList().size(); j++) {
+                        ProteinData pd = organism.getProteinDataList().get(j);
+                        writer.append("PROTEINID:" + pd.getProteinId() + "\n");
+                        writer.append("AMINODATA:" + pd.getAminoacidData() + "\n");
+                    }
+                }
+
+            }
+
+            if (writer != null) writer.close();
+
+            System.out.println("Arquivo de resultados [" + fileName + "] gerado com sucesso");
+
+        }catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private static void printResultIdentificatedEnzimesModules(Organism organism){
+        String fileName = organism.getName() +"_enzymeModulesBMPipeline.out.txt";
+
+        try {
+
+            BufferedWriter writer = null;
+
+            if (organism.getEcList().size()>0){
+
+                writer = new BufferedWriter (new FileWriter(fileName, false));
+
+                List<EnzymeClass> completeModulesList = new ArrayList<>();
+
+                writer.append("ORGANISM:" + organism.getName() + "\n");
+                writer.newLine();
+
+                EnzymeClass ecComplete = new EnzymeClass();
+
+                for (int i = 0; i < organism.getEcList().size(); i++) {
+
+                    writer.append("-------------------------   IDENTIFICATED ENZIMES");
+                    writer.newLine();
+
+                    EnzymeClass ec = organism.getEcList().get(i);
+                    ecComplete = new EnzymeClass(ec.getEcNumber());
+
+                    writer.append("EC " + ec.getEcNumber() + "\n");
+                    writer.append(":: Organism modules:");
+                    writer.newLine();
+
+                    for (int m = 0; m < ec.getModules().size(); m++) {
+                        writer.append("MNAME " + ec.getModules().get(m).getModule()+ "\n");
+                        writer.append("::    Module's KOs:"+ "\n");
+                        writer.append("MOKs " + ec.getModules().get(m).getKos().toString()+ "\n");
+                        writer.append("::    EC's KOs:"+ "\n"); //sendKoList
+                        writer.append("EKOs " + ec.getModules().get(m).getKosFromEC().toString()+ "\n"); //sendKoList
+                        writer.append("COMPLETE " + ec.getModules().get(m).isComplete()+ "\n");
+                        if (!ec.getModules().get(m).isComplete()){
+                            //Se não estiver completo, mostra quais KOs pertencem apenas a modulo ou à lista de Kos do EC
+                            writer.append("    - MKOSONLY " + new UtilMethods().getMinusList(ec.getModules().get(m).getKos(), ec.getModules().get(m).getKosFromEC()).toString()+ "\n");
+                            writer.append("    - EKOSONLY " + new UtilMethods().getMinusList(ec.getModules().get(m).getKosFromEC(), ec.getModules().get(m).getKos()).toString()+ "\n");
+                        }else{
+                            ecComplete.getModules().add(ec.getModules().get(m));
+                        }
+                    }
+
+                    if (ecComplete.getModules().size() > 0) {
+
+                        completeModulesList.add(ecComplete);
+                    }
+                }
+
+                writer.newLine();
+                writer.append("-------------------------   IDENTIFICATED COMPLETE MODULES");
+                writer.newLine();
+
+                //Lista módulos completos
+                for (int i = 0; i < completeModulesList.size() ; i++) {
+                    EnzymeClass complete = completeModulesList.get(i);
+                    writer.append("EC " + complete.getEcNumber()+ "\n");
+
+                    for (int m = 0; m < complete.getModules().size(); m++) {
+                        writer.append("COMPLETE MNAME " + complete.getModules().get(m).getModule()+ "\n");
+                        writer.append("::    Module's KOs:"+ "\n");
+                        writer.append("CMOKs " + complete.getModules().get(m).getKos().toString()+ "\n");
+                        writer.append("::    EC's KOs:" + complete.getModules().get(m).getKosFromEC().toString()+ "\n"); //sendKoList
+                        writer.append("CEKOs " + complete.getModules().get(m).getKosFromEC().toString()+ "\n"); //sendKoList
+                    }
+
+                }
+
+            }
+
+            if (writer != null) writer.close();
+
+            System.out.println("Arquivo de resultados [" + fileName + "] gerado com sucesso");
+
+        }catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
 }
