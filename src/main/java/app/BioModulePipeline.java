@@ -35,6 +35,7 @@ public class BioModulePipeline implements CommandLineRunner {
     private String filesPath = "";
     private String organismName = "";
     private String proteomFile = "";
+    private boolean verbose = false;
 
     public static void main(String args[]) {
         SpringApplication.run(BioModulePipeline.class, args);
@@ -62,6 +63,9 @@ public class BioModulePipeline implements CommandLineRunner {
                     case "-fa":
                         proteomFile = args[l + 1];
                         break;
+                    case "-v":
+                        verbose=true;
+                        break;
                     case "-help":
                         help = true;
                         break;
@@ -74,6 +78,7 @@ public class BioModulePipeline implements CommandLineRunner {
                 System.out.println("Arguments:\n");
                 System.out.println("-fp: File path with all the filenames to analise");
                 System.out.println("-fa: File with all organism's proteome data");
+                System.out.println("-v: Print log messages during pipeline execution");
                 System.out.println("-help: Show the arguments");
             } else if ((filesPath == null && filesPath == null) || (proteomFile == null && proteomFile == null)) {
                 System.out.println("Please inform the files path to analise.");
@@ -107,7 +112,7 @@ public class BioModulePipeline implements CommandLineRunner {
         }
     }
 
-    public static String organismAnalises(String organismName, String pathToRead, String proteomFile) {
+    public String organismAnalises(String organismName, String pathToRead, String proteomFile) {
 
         try {
 
@@ -123,6 +128,7 @@ public class BioModulePipeline implements CommandLineRunner {
             String actualEC = "";
             Stream<String> resultingStream = Stream.empty();
 
+            System.out.println("Getting EC List from parsed file");
             for (int i = 0; i < files.length; i++) {
                 Path file = ((Path)files[i]);
                 String fileName = file.toAbsolutePath().toString();
@@ -136,9 +142,13 @@ public class BioModulePipeline implements CommandLineRunner {
                 }
             }
 
+            System.out.println("Finish :: Getting EC List from parsed file");
+
             //Aqui tenho o objeto de Organism com os dados do fasta.
 
             //Ir ao KEGG buscar os KOs
+            System.out.println("Getting all Kegg data from KeggBlast entries by EC");
+
             for (int j = 0; j < organism.getEcList().size(); j++) {
 
                 EnzymeClass ec = organism.getEcList().get(j);
@@ -146,7 +156,7 @@ public class BioModulePipeline implements CommandLineRunner {
                 for (int e = 0; e < ec.getFastaList().size(); e++) {
                     String entryKeggBlast = ec.getFastaList().get(e).getEntryKeggBlastHit();
 
-                    System.out.println(">> EC: " + ec.getEcNumber() + " | entryKeggBlast: " + entryKeggBlast);
+                    if (verbose) System.out.println(">> EC: " + ec.getEcNumber() + " | entryKeggBlast: " + entryKeggBlast);
 
                     if (entryKeggBlast != null && entryKeggBlast != ""){
                         KEGGData kd = new KEGGApiRequest().getKeggApiInfo(entryKeggBlast);
@@ -166,18 +176,26 @@ public class BioModulePipeline implements CommandLineRunner {
                     }
                 }
 
+                System.out.println("Finish :: Getting all Kegg data from KeggBlast entries by EC");
+
                 //Buscar módulos e verificar se são completos
+                System.out.println("Getting all modules data from Kegg");
                 if (kosEc != ""){
-                    List<KEGGModule> modules = keggRequest.getModules(kosEc);
+                    List<KEGGModule> modules = keggRequest.getModules(kosEc, verbose);
                     ec.setModules(modules);
                 }
+                System.out.println("Finish :: Getting all modules data from Kegg");
             }
 
             organism.setProteinDataList(new FileUtil().getProteinDataListFromProteomeFile(proteomFile));
 
             //Impressão do resultado
+            System.out.println("Generating Protein Data result file");
             printResultProteinData(organism);
+            System.out.println("Finish :: Starting to generate Protein Data result file");
+            System.out.println("Starting to generate Identificated Enzimes Modules result file");
             printResultIdentificatedEnzimesModules(organism);
+            System.out.println("Finish :: Generating Identificated Enzimes Modules result file");
 
         } catch (IOException e) {
             e.printStackTrace();
